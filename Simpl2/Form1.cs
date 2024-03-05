@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ScintillaNET;
+using System;
 using System.IO;
 using System.Windows.Forms;
 
@@ -6,11 +7,17 @@ namespace Simpl2
 {
     public partial class Simpl : Form
     {
+        private Scintilla scintilla = new Scintilla();
         // Main entry point for the application
         public Simpl()
         {
+            //initialize the form
             InitializeComponent();
-            // Additional initialization can go here
+
+            //initialize the ScintillaNET control
+            InitializeScintillaNET();
+
+            treeViewSidebar.BeforeExpand += treeViewSidebar_BeforeExpand;
 
             // Wire up the Click event handlers for menu items
             this.newFileToolStripMenuItem.Click += new EventHandler(this.newFileToolStripMenuItem_Click);
@@ -30,10 +37,22 @@ namespace Simpl2
         {
             SaveFileDialog saveFileDialog = new SaveFileDialog();
             saveFileDialog.Filter = "Text File (*.txt)|*.txt|All files (*.*)|*.*";
+
+            // Show the Save File dialog. If the user clicks OK, create a new file.
             if (saveFileDialog.ShowDialog() == DialogResult.OK)
             {
-                File.WriteAllText(saveFileDialog.FileName, "");
-                MessageBox.Show("New file created: " + saveFileDialog.FileName);
+                // Create and open the file for writing. If it already exists, it will be overwritten.
+                using (StreamWriter streamWriter = new StreamWriter(saveFileDialog.FileName, false))
+                {
+                    // You can initialize the file with some content if needed, e.g., streamWriter.Write("");
+                }
+
+                // Open the file for editing in richTextBoxMain.
+                richTextBoxMain.Text = File.ReadAllText(saveFileDialog.FileName);
+                richTextBoxMain.Tag = saveFileDialog.FileName;  // Store the file path in Tag for later use.
+
+                // Optionally, set the form's Text property to the name of the file.
+                this.Text = $"Editing {Path.GetFileName(saveFileDialog.FileName)}";
             }
         }
 
@@ -72,22 +91,65 @@ namespace Simpl2
             Application.Exit();
         }
 
-
         // Method to populate TreeView with directory contents
+        //private void LoadDirectoryIntoTreeView(string selectedPath)
+        //{
+        //    DirectoryInfo directoryInfo = new DirectoryInfo(selectedPath);
+        //    TreeNode rootNode = treeViewSidebar.Nodes.Add(directoryInfo.Name);
+        //    foreach (var directory in directoryInfo.GetDirectories())
+        //    {
+        //        TreeNode dirNode = rootNode.Nodes.Add(directory.Name);
+        //        // Optionally, call a recursive function to load subdirectories
+        //    }
+        //    foreach (var file in directoryInfo.GetFiles())
+        //    {
+        //        rootNode.Nodes.Add(file.Name);
+        //    }
+        //    rootNode.Expand();
+        //}
+
         private void LoadDirectoryIntoTreeView(string selectedPath)
         {
             DirectoryInfo directoryInfo = new DirectoryInfo(selectedPath);
             TreeNode rootNode = treeViewSidebar.Nodes.Add(directoryInfo.Name);
-            foreach (var directory in directoryInfo.GetDirectories())
+            rootNode.Tag = directoryInfo; // Tag the node with the directory info
+            LoadSubDirectories(rootNode); // Add the subdirectories
+        }
+
+        private void LoadSubDirectories(TreeNode node)
+        {
+            DirectoryInfo directoryInfo = (DirectoryInfo)node.Tag;
+            foreach (DirectoryInfo directory in directoryInfo.GetDirectories())
             {
-                TreeNode dirNode = rootNode.Nodes.Add(directory.Name);
-                // Optionally, call a recursive function to load subdirectories
+                TreeNode dirNode = node.Nodes.Add(directory.Name);
+                dirNode.Tag = directory; // Tag the node with the directory info
+                dirNode.Nodes.Add("dummy"); // Add a dummy node so expand sign is shown
             }
-            foreach (var file in directoryInfo.GetFiles())
+        }
+
+        private void treeViewSidebar_BeforeExpand(object sender, TreeViewCancelEventArgs e)
+        {
+            TreeNode expandedNode = e.Node;
+
+            if (expandedNode.Nodes.Count == 1 && expandedNode.Nodes[0].Text == "dummy")
             {
-                rootNode.Nodes.Add(file.Name);
+                // Remove the dummy node that was added earlier
+                expandedNode.Nodes.Clear();
+
+                // Load the subdirectories and files for the expanded node
+                LoadSubDirectories(expandedNode);
+                LoadFiles(expandedNode);
             }
-            rootNode.Expand();
+        }
+
+        private void LoadFiles(TreeNode node)
+        {
+            DirectoryInfo directoryInfo = (DirectoryInfo)node.Tag;
+            foreach (FileInfo file in directoryInfo.GetFiles())
+            {
+                TreeNode fileNode = node.Nodes.Add(file.Name);
+                fileNode.Tag = file; // Tag the node with the file info
+            }
         }
 
         private void treeViewSidebar_AfterSelect(object sender, TreeViewEventArgs e)

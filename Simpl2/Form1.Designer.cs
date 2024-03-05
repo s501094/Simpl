@@ -1,4 +1,7 @@
-﻿namespace Simpl2
+﻿using ScintillaNET;
+using System.Windows.Forms;
+
+namespace Simpl2
 {
     partial class Simpl
     {
@@ -240,6 +243,54 @@
             this.ResumeLayout(false);
             this.PerformLayout();
 
+        }
+        /// <summary>
+        /// main constructor for the ScintillaNet Control
+        /// </summary>
+        private void InitializeScintillaNET()
+        {
+            scintilla.Dock = DockStyle.Fill; // Fill the form or container
+
+            // Basic configuration
+            scintilla.Margins[0].Width = 16; // Line numbers margin
+            //scintilla.LexerName = "Cpp";// Example lexer, set according to your needs
+            scintilla.LexerName = "python";
+            //scintilla.LexerName = "cs";
+            //scintilla.LexerName = "Java";
+            //scintilla.LexerName = "html";
+            //scintilla.LexerName = "xml";
+            //scintilla.LexerName = "sql";
+            //scintilla.LexerName = "vb";
+            //scintilla.LexerName = "lua";
+            //scintilla.LexerName = "perl";
+            //scintilla.LexerName = "ruby";
+            //scintilla.LexerName = "properties";
+            //scintilla.LexerName = "makefile";
+            //scintilla.LexerName = "batch";
+            //scintilla.LexerName = "ini";
+            //scintilla.LexerName = "diff";
+            //scintilla.LexerName = "json";
+            //scintilla.LexerName = "yaml";
+            //scintilla.LexerName = "toml";
+            //scintilla.LexerName = "markdown";
+            //scintilla.LexerName = "rust";
+            //scintilla.LexerName = "julia";
+            //scintilla.LexerName = "powershell";
+
+
+            // Customize Scintilla Defaults
+            scintilla.StyleResetDefault();
+            scintilla.Styles[Style.Default].Font = "Monaspace Radon Var";
+            scintilla.Styles[Style.Default].Size = 14;
+            scintilla.Styles[Style.Default].Bold = true;
+            scintilla.StyleClearAll();
+
+            // Line numbering
+            scintilla.Margins[0].Type = MarginType.Number;
+            scintilla.Margins[0].Width = 40; // Adjust the width to show all numbers
+
+            // Add Scintilla to the form
+            this.Controls.Add(scintilla);
         }
 
         private void Form1_Load(object sender, System.EventArgs e)
